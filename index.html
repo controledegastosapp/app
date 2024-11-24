@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreador de Gastos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Playfair Display', serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #FFD700;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #111;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(255, 215, 0, 0.3);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #FFD700;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #FFD700;
+            border-radius: 4px;
+            background-color: #222;
+            color: #FFD700;
+        }
+        button {
+            background-color: #FFD700;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            color: #FFD700;
+        }
+        table th, table td {
+            border: 1px solid #FFD700;
+            padding: 10px;
+            text-align: center;
+        }
+        table th {
+            background-color: #333;
+        }
+        .summary {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rastreador de Gastos</h1>
+
+        <!-- Formulário para adicionar despesas -->
+        <h2>Adicionar Despesa</h2>
+        <div class="form-group">
+            <label for="expenseName">Nome da Despesa:</label>
+            <input type="text" id="expenseName" placeholder="Ex.: Hotel">
+        </div>
+        <div class="form-group">
+            <label for="expenseAmount">Valor:</label>
+            <input type="number" id="expenseAmount" placeholder="Digite o valor">
+        </div>
+        <div class="form-group">
+            <label for="currency">Moeda:</label>
+            <select id="currency">
+                <option value="BRL">BRL</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="payer">Quem Pagou?</label>
+            <input type="text" id="payer" placeholder="Digite o nome">
+        </div>
+        <div class="form-group">
+            <label for="category">Categoria:</label>
+            <select id="category">
+                <option value="Transporte">Transporte</option>
+                <option value="Alimentação">Alimentação</option>
+                <option value="Hospedagem">Hospedagem</option>
+                <option value="Outros">Outros</option>
+            </select>
+        </div>
+        <button onclick="addExpense()">Adicionar Despesa</button>
+
+        <!-- Tabela de despesas -->
+        <h2>Despesas</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Valor</th>
+                    <th>Moeda</th>
+                    <th>Pagador</th>
+                    <th>Categoria</th>
+                </tr>
+            </thead>
+            <tbody id="expenseTableBody">
+                <!-- As despesas serão inseridas aqui -->
+            </tbody>
+        </table>
+
+        <!-- Resumo -->
+        <div class="summary">
+            <h2>Total de Gastos</h2>
+            <p id="totalExpenses">0.00</p>
+        </div>
+    </div>
+
+    <script>
+        // Array para armazenar as despesas
+        let expenses = [];
+
+        // Função para adicionar uma nova despesa
+        function addExpense() {
+            // Captura os valores dos campos
+            const name = document.getElementById("expenseName").value.trim();
+            const amount = parseFloat(document.getElementById("expenseAmount").value);
+            const currency = document.getElementById("currency").value;
+            const payer = document.getElementById("payer").value.trim();
+            const category = document.getElementById("category").value;
+
+            // Valida os dados de entrada
+            if (!name || isNaN(amount) || amount <= 0 || !payer) {
+                alert("Preencha todos os campos corretamente!");
+                return;
+            }
+
+            // Adiciona a despesa ao array
+            const expense = { name, amount, currency, payer, category };
+            expenses.push(expense);
+
+            // Atualiza a interface do usuário
+            updateTable();
+            updateTotal();
+
+            // Limpa os campos do formulário
+            document.getElementById("expenseName").value = "";
+            document.getElementById("expenseAmount").value = "";
+            document.getElementById("payer").value = "";
+        }
+
+        // Função para atualizar a tabela de despesas
+        function updateTable() {
+            const tableBody = document.getElementById("expenseTableBody");
+            tableBody.innerHTML = ""; // Limpa a tabela antes de atualizar
+
+            // Adiciona cada despesa à tabela
+            expenses.forEach((expense) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${expense.name}</td>
+                    <td>${expense.amount.toFixed(2)}</td>
+                    <td>${expense.currency}</td>
+                    <td>${expense.payer}</td>
+                    <td>${expense.category}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Função para calcular o total de despesas
+        function updateTotal() {
+            const totalPerCurrency = {};
+            expenses.forEach(expense => {
+                if (!totalPerCurrency[expense.currency]) {
+                    totalPerCurrency[expense.currency] = 0;
+                }
+                totalPerCurrency[expense.currency] += expense.amount;
+            });
+
+            // Monta o total formatado por moeda
+            let totalText = "";
+            for (const [currency, total] of Object.entries(totalPerCurrency)) {
+                totalText += `${currency}: ${total.toFixed(2)}<br>`;
+            }
+            document.getElementById("totalExpenses").innerHTML = totalText;
+        }
+    </script>
+</body>
+</html>
