@@ -9,84 +9,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body {
-            font-family: 'Montserrat', serif;
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            color: #FFD700;
-        }
-        .container {
-            max-width: 800px;
-            margin: 20px auto;
-            background: #111;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(255, 215, 0, 0.3);
-        }
-        h1, h2 {
-            text-align: center;
-            color: #FFD700;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #FFD700;
-        }
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #FFD700;
-            border-radius: 4px;
-            background-color: #222;
-            color: #FFD700;
-        }
-        button {
-            font-weight: bold;
-            cursor: pointer;
-        }
-        button.download {
-            background-color: #FFD700;
-            color: #000;
-            border-radius: 25px;
-            border: none;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            color: #FFD700;
-        }
-        table th, table td {
-            border: 1px solid #FFD700;
-            padding: 10px;
-            text-align: center;
-        }
-        table th {
-            background-color: #333;
-        }
-        .summary {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-        }
+        /* O estilo original permanece o mesmo */
+        body { font-family: 'Montserrat', serif; margin: 0; padding: 0; background-color: #000; color: #FFD700; }
+        .container { max-width: 800px; margin: 20px auto; background: #111; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(255, 215, 0, 0.3); }
+        h1, h2 { text-align: center; color: #FFD700; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #FFD700; }
+        input, select, button { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #FFD700; border-radius: 4px; background-color: #222; color: #FFD700; }
+        button { font-weight: bold; cursor: pointer; }
+        button.download { background-color: #FFD700; color: #000; border-radius: 25px; border: none; font-size: 16px; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; color: #FFD700; }
+        table th, table td { border: 1px solid #FFD700; padding: 10px; text-align: center; }
+        table th { background-color: #333; }
+        .summary { margin-top: 20px; text-align: center; }
+        .footer { margin-top: 30px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- O layout permanece o mesmo -->
         <h1>Controle de Gastos</h1>
-
-        <!-- Formulário para salário -->
         <h2>Definir Salário</h2>
         <div class="form-group">
             <label for="salary">Salário Mensal:</label>
@@ -97,7 +39,6 @@
             <input type="date" id="salaryDate">
         </div>
 
-        <!-- Formulário para adicionar despesas -->
         <h2>Adicionar Despesa</h2>
         <div class="form-group">
             <label for="expenseName">Nome da Despesa:</label>
@@ -126,7 +67,6 @@
         </div>
         <button onclick="addExpense()">Adicionar Despesa</button>
 
-        <!-- Tabela de despesas -->
         <h2>Despesas</h2>
         <table id="expenseTable">
             <thead>
@@ -137,12 +77,9 @@
                     <th>Categoria</th>
                 </tr>
             </thead>
-            <tbody id="expenseTableBody">
-                <!-- As despesas serão inseridas aqui -->
-            </tbody>
+            <tbody id="expenseTableBody"></tbody>
         </table>
 
-        <!-- Resumo -->
         <div class="summary">
             <h2>Total de Gastos</h2>
             <p id="totalExpenses">R$ 0.00</p>
@@ -150,7 +87,6 @@
             <p id="remainingBalance">R$ 0.00</p>
         </div>
 
-        <!-- Botões para baixar os resumos -->
         <div class="footer">
             <button class="download" onclick="downloadTableAsPDF()">Baixar Resumo como PDF</button>
             <button class="download" onclick="downloadAsExcel()">Baixar Resumo como Excel</button>
@@ -176,6 +112,7 @@
 
             updateTable();
             updateTotal();
+            saveData();
 
             document.getElementById("expenseName").value = "";
             document.getElementById("expenseAmount").value = "";
@@ -208,66 +145,31 @@
             document.getElementById("remainingBalance").innerHTML = `R$ ${remainingBalance.toFixed(2)}`;
         }
 
-        function downloadTableAsPDF() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-
-            const salary = parseFloat(document.getElementById("salary").value) || 0;
-            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-            const remainingBalance = salary - totalExpenses;
-
-            pdf.text("Resumo de Despesas e Saldo", 10, 10);
-            pdf.text(`Total de Gastos: R$ ${totalExpenses.toFixed(2)}`, 10, 20);
-            pdf.text(`Saldo Restante: R$ ${remainingBalance.toFixed(2)}`, 10, 30);
-
-            pdf.autoTable({
-                head: [['Nome', 'Valor (R$)', 'Data de Pagamento', 'Categoria']],
-                body: expenses.map(expense => [
-                    expense.name,
-                    expense.amount.toFixed(2),
-                    expense.paymentDate,
-                    expense.category
-                ]),
-                startY: 40,
-                theme: 'grid'
-            });
-
-            pdf.save("resumo_despesas.pdf");
+        function saveData() {
+            const data = {
+                salary: document.getElementById("salary").value,
+                salaryDate: document.getElementById("salaryDate").value,
+                expenses: expenses
+            };
+            localStorage.setItem("expenseTrackerData", JSON.stringify(data));
         }
 
-        function downloadAsExcel() {
-            const salary = parseFloat(document.getElementById("salary").value) || 0;
-            const salaryDate = document.getElementById("salaryDate").value || "Não informado";
-            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-            const remainingBalance = salary - totalExpenses;
-
-            const workbook = XLSX.utils.book_new();
-
-            // Salário e resumo
-            const summaryData = [
-                ["Salário Mensal", salary.toFixed(2)],
-                ["Data de Recebimento", salaryDate],
-                ["Total de Gastos", totalExpenses.toFixed(2)],
-                ["Saldo Restante", remainingBalance.toFixed(2)]
-            ];
-            const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-            XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumo");
-
-            // Despesas
-            const expensesData = [
-                ["Nome", "Valor (R$)", "Data de Pagamento", "Categoria"],
-                ...expenses.map(expense => [
-                    expense.name,
-                    expense.amount.toFixed(2),
-                    expense.paymentDate,
-                    expense.category
-                ])
-            ];
-            const expensesSheet = XLSX.utils.aoa_to_sheet(expensesData);
-            XLSX.utils.book_append_sheet(workbook, expensesSheet, "Despesas");
-
-            XLSX.writeFile(workbook, "resumo_gastos.xlsx");
+        function loadData() {
+            const savedData = localStorage.getItem("expenseTrackerData");
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById("salary").value = data.salary || "";
+                document.getElementById("salaryDate").value = data.salaryDate || "";
+                expenses = data.expenses || [];
+                updateTable();
+                updateTotal();
+            }
         }
+
+        window.onload = loadData;
+
+        document.getElementById("salary").addEventListener("input", saveData);
+        document.getElementById("salaryDate").addEventListener("change", saveData);
     </script>
 </body>
 </html>
