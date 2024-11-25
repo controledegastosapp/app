@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastreador de Gastos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <title>Controle de Gastos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Montserrat', serif;
             margin: 0;
             padding: 0;
             background-color: #000;
@@ -44,10 +47,16 @@
             color: #FFD700;
         }
         button {
-            background-color: #FFD700;
-            color: #000;
             font-weight: bold;
             cursor: pointer;
+        }
+        button.download {
+            background-color: #FFD700;
+            color: #000;
+            border-radius: 25px;
+            border: none;
+            font-size: 16px;
+            margin-bottom: 10px;
         }
         table {
             width: 100%;
@@ -67,11 +76,26 @@
             margin-top: 20px;
             text-align: center;
         }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Rastreador de Gastos</h1>
+
+        <!-- Formulário para salário -->
+        <h2>Definir Salário</h2>
+        <div class="form-group">
+            <label for="salary">Salário Mensal:</label>
+            <input type="number" id="salary" placeholder="Digite o salário" onchange="updateTotal()">
+        </div>
+        <div class="form-group">
+            <label for="salaryDate">Data de Recebimento:</label>
+            <input type="date" id="salaryDate">
+        </div>
 
         <!-- Formulário para adicionar despesas -->
         <h2>Adicionar Despesa</h2>
@@ -84,23 +108,17 @@
             <input type="number" id="expenseAmount" placeholder="Digite o valor">
         </div>
         <div class="form-group">
-            <label for="currency">Moeda:</label>
-            <select id="currency">
-                <option value="BRL">BRL</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="payer">Quem Pagou?</label>
-            <input type="text" id="payer" placeholder="Digite o nome">
+            <label for="paymentDate">Data de Pagamento:</label>
+            <input type="date" id="paymentDate">
         </div>
         <div class="form-group">
             <label for="category">Categoria:</label>
             <select id="category">
+                <option value="Aluguel">Aluguel</option>
+                <option value="Mercado">Mercado</option>
+                <option value="Alimentação ou Ifood">Alimentação ou Ifood</option>
                 <option value="Transporte">Transporte</option>
-                <option value="Alimentação">Alimentação</option>
-                <option value="Hospedagem">Hospedagem</option>
+                <option value="Lazer">Lazer</option>
                 <option value="Outros">Outros</option>
             </select>
         </div>
@@ -108,13 +126,12 @@
 
         <!-- Tabela de despesas -->
         <h2>Despesas</h2>
-        <table>
+        <table id="expenseTable">
             <thead>
                 <tr>
                     <th>Nome</th>
                     <th>Valor</th>
-                    <th>Moeda</th>
-                    <th>Pagador</th>
+                    <th>Data de Pagamento</th>
                     <th>Categoria</th>
                 </tr>
             </thead>
@@ -126,78 +143,128 @@
         <!-- Resumo -->
         <div class="summary">
             <h2>Total de Gastos</h2>
-            <p id="totalExpenses">0.00</p>
+            <p id="totalExpenses">R$ 0.00</p>
+            <h2>Saldo Restante</h2>
+            <p id="remainingBalance">R$ 0.00</p>
+        </div>
+
+        <!-- Botões para baixar os resumos -->
+        <div class="footer">
+            <button class="download" onclick="downloadTableAsPDF()">Baixar Resumo como PDF</button>
+            <button class="download" onclick="downloadAsExcel()">Baixar Resumo como Excel</button>
         </div>
     </div>
 
     <script>
-        // Array para armazenar as despesas
         let expenses = [];
 
-        // Função para adicionar uma nova despesa
         function addExpense() {
-            // Captura os valores dos campos
             const name = document.getElementById("expenseName").value.trim();
             const amount = parseFloat(document.getElementById("expenseAmount").value);
-            const currency = document.getElementById("currency").value;
-            const payer = document.getElementById("payer").value.trim();
+            const paymentDate = document.getElementById("paymentDate").value;
             const category = document.getElementById("category").value;
 
-            // Valida os dados de entrada
-            if (!name || isNaN(amount) || amount <= 0 || !payer) {
+            if (!name || isNaN(amount) || amount <= 0 || !paymentDate) {
                 alert("Preencha todos os campos corretamente!");
                 return;
             }
 
-            // Adiciona a despesa ao array
-            const expense = { name, amount, currency, payer, category };
+            const expense = { name, amount, paymentDate, category };
             expenses.push(expense);
 
-            // Atualiza a interface do usuário
             updateTable();
             updateTotal();
 
-            // Limpa os campos do formulário
             document.getElementById("expenseName").value = "";
             document.getElementById("expenseAmount").value = "";
-            document.getElementById("payer").value = "";
+            document.getElementById("paymentDate").value = "";
         }
 
-        // Função para atualizar a tabela de despesas
         function updateTable() {
             const tableBody = document.getElementById("expenseTableBody");
-            tableBody.innerHTML = ""; // Limpa a tabela antes de atualizar
+            tableBody.innerHTML = "";
 
-            // Adiciona cada despesa à tabela
             expenses.forEach((expense) => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${expense.name}</td>
                     <td>${expense.amount.toFixed(2)}</td>
-                    <td>${expense.currency}</td>
-                    <td>${expense.payer}</td>
+                    <td>${expense.paymentDate}</td>
                     <td>${expense.category}</td>
                 `;
                 tableBody.appendChild(row);
             });
         }
 
-        // Função para calcular o total de despesas
         function updateTotal() {
-            const totalPerCurrency = {};
-            expenses.forEach(expense => {
-                if (!totalPerCurrency[expense.currency]) {
-                    totalPerCurrency[expense.currency] = 0;
-                }
-                totalPerCurrency[expense.currency] += expense.amount;
+            const salary = parseFloat(document.getElementById("salary").value) || 0;
+
+            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+            document.getElementById("totalExpenses").innerHTML = `R$ ${totalExpenses.toFixed(2)}`;
+            const remainingBalance = salary - totalExpenses;
+            document.getElementById("remainingBalance").innerHTML = `R$ ${remainingBalance.toFixed(2)}`;
+        }
+
+        function downloadTableAsPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+
+            const salary = parseFloat(document.getElementById("salary").value) || 0;
+            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const remainingBalance = salary - totalExpenses;
+
+            pdf.text("Resumo de Despesas e Saldo", 10, 10);
+            pdf.text(`Total de Gastos: R$ ${totalExpenses.toFixed(2)}`, 10, 20);
+            pdf.text(`Saldo Restante: R$ ${remainingBalance.toFixed(2)}`, 10, 30);
+
+            pdf.autoTable({
+                head: [['Nome', 'Valor (R$)', 'Data de Pagamento', 'Categoria']],
+                body: expenses.map(expense => [
+                    expense.name,
+                    expense.amount.toFixed(2),
+                    expense.paymentDate,
+                    expense.category
+                ]),
+                startY: 40,
+                theme: 'grid'
             });
 
-            // Monta o total formatado por moeda
-            let totalText = "";
-            for (const [currency, total] of Object.entries(totalPerCurrency)) {
-                totalText += `${currency}: ${total.toFixed(2)}<br>`;
-            }
-            document.getElementById("totalExpenses").innerHTML = totalText;
+            pdf.save("resumo_despesas.pdf");
+        }
+
+        function downloadAsExcel() {
+            const salary = parseFloat(document.getElementById("salary").value) || 0;
+            const salaryDate = document.getElementById("salaryDate").value || "Não informado";
+            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const remainingBalance = salary - totalExpenses;
+
+            const workbook = XLSX.utils.book_new();
+
+            // Salário e resumo
+            const summaryData = [
+                ["Salário Mensal", salary.toFixed(2)],
+                ["Data de Recebimento", salaryDate],
+                ["Total de Gastos", totalExpenses.toFixed(2)],
+                ["Saldo Restante", remainingBalance.toFixed(2)]
+            ];
+            const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumo");
+
+            // Despesas
+            const expensesData = [
+                ["Nome", "Valor (R$)", "Data de Pagamento", "Categoria"],
+                ...expenses.map(expense => [
+                    expense.name,
+                    expense.amount.toFixed(2),
+                    expense.paymentDate,
+                    expense.category
+                ])
+            ];
+            const expensesSheet = XLSX.utils.aoa_to_sheet(expensesData);
+            XLSX.utils.book_append_sheet(workbook, expensesSheet, "Despesas");
+
+            XLSX.writeFile(workbook, "resumo_gastos.xlsx");
         }
     </script>
 </body>
