@@ -29,7 +29,7 @@
             color: #FFD700;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 15px; /* Espaçamento uniforme */
         }
         label {
             display: block;
@@ -38,20 +38,21 @@
             color: #FFD700;
         }
         input, select, button {
-            width: 96%;
-            padding: 10px;
-            margin-top: 5px;
-            font-size: 18px; /* Aumentado em 2 unidades */
-            border: 1px solid #FFD700;
-            border-radius: 4px;
-            background-color: #222;
-            color: #FFD700;
+            width: 100%; /* Largura consistente */
+            padding: 10px; /* Espaçamento interno uniforme */
+            margin-top: 5px; /* Espaçamento superior */
+            font-size: 18px; /* Tamanho de fonte uniforme */
+            border: 1px solid #FFD700; /* Borda consistente */
+            border-radius: 4px; /* Cantos arredondados iguais */
+            background-color: #222; /* Fundo igual para todos */
+            color: #FFD700; /* Cor do texto */
+            box-sizing: border-box; /* Garante que padding e borda sejam incluídos na largura */
         }
         button {
             font-weight: bold;
             cursor: pointer;
         }
-        button.download {
+        button.download, button {
             background-color: #FFD700;
             color: #000;
             border-radius: 25px;
@@ -122,7 +123,9 @@
                 <option value="Outros">Outros</option>
             </select>
         </div>
-        <button onclick="addExpense()">Adicionar Despesa</button>
+        <div class="form-group">
+            <button onclick="addExpense()">Adicionar Despesa</button>
+        </div>
 
         <h2>Despesas</h2>
         <table id="expenseTable">
