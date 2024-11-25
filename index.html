@@ -29,7 +29,10 @@
             color: #FFD700;
         }
         .form-group {
-            margin-bottom: 15px; /* Espaçamento uniforme */
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
         label {
             display: block;
@@ -37,16 +40,44 @@
             font-weight: bold;
             color: #FFD700;
         }
-        input, select, button {
-            width: 100%; /* Largura consistente */
-            padding: 10px; /* Espaçamento interno uniforme */
-            margin-top: 5px; /* Espaçamento superior */
-            font-size: 18px; /* Tamanho de fonte uniforme */
-            border: 1px solid #FFD700; /* Borda consistente */
-            border-radius: 4px; /* Cantos arredondados iguais */
-            background-color: #222; /* Fundo igual para todos */
-            color: #FFD700; /* Cor do texto */
-            box-sizing: border-box; /* Garante que padding e borda sejam incluídos na largura */
+        .currency-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .currency-wrapper span {
+            font-size: 18px;
+            color: #FFD700;
+            background-color: #222;
+            padding: 10px;
+            border: 1px solid #FFD700;
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #FFD700;
+            border-radius: 4px;
+            background-color: #222;
+            color: #FFD700;
+            box-sizing: border-box;
+        }
+        .currency-wrapper input {
+            border-radius: 0 4px 4px 0;
+            border-left: none;
+            width: calc(100% - 50px);
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 18px;
+            border: 1px solid #FFD700;
+            border-radius: 4px;
+            background-color: #222;
+            color: #FFD700;
+            box-sizing: border-box;
         }
         button {
             font-weight: bold;
@@ -77,6 +108,7 @@
         .summary {
             margin-top: 20px;
             text-align: center;
+            font-size: 18px;
         }
         .footer {
             margin-top: 30px;
@@ -90,7 +122,10 @@
         <h2>Definir Salário</h2>
         <div class="form-group">
             <label for="salary">Salário Mensal:</label>
-            <input type="number" id="salary" placeholder="Digite o salário" onchange="updateTotal()">
+            <div class="currency-wrapper">
+                <span>R$</span>
+                <input type="number" id="salary" placeholder="Digite o salário" onchange="updateTotal()">
+            </div>
         </div>
         <div class="form-group">
             <label for="salaryDate">Data de Recebimento:</label>
@@ -100,11 +135,14 @@
         <h2>Adicionar Despesa</h2>
         <div class="form-group">
             <label for="expenseName">Nome da Despesa:</label>
-            <input type="text" id="expenseName" placeholder="Ex.: Aluguel">
+            <input type="text" id="expenseName" placeholder="Ex.: Hotel">
         </div>
         <div class="form-group">
             <label for="expenseAmount">Valor:</label>
-            <input type="number" id="expenseAmount" placeholder="Digite o valor">
+            <div class="currency-wrapper">
+                <span>R$</span>
+                <input type="number" id="expenseAmount" placeholder="Digite o valor">
+            </div>
         </div>
         <div class="form-group">
             <label for="paymentDate">Data de Pagamento:</label>
@@ -156,6 +194,25 @@
     <script>
         let expenses = [];
 
+        function formatDate(dateString) {
+            if (!dateString) return "";
+            const [year, month, day] = dateString.split("-");
+            return `${day}-${month}-${year}`;
+        }
+
+        function loadData() {
+            const savedData = localStorage.getItem("expenseTrackerData");
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                const salaryDate = data.salaryDate || "";
+                document.getElementById("salary").value = data.salary || "";
+                document.getElementById("salaryDate").value = salaryDate;
+                expenses = data.expenses || [];
+                updateTable();
+                updateTotal();
+            }
+        }
+
         function addExpense() {
             const name = document.getElementById("expenseName").value.trim();
             const amount = parseFloat(document.getElementById("expenseAmount").value);
@@ -167,7 +224,12 @@
                 return;
             }
 
-            const expense = { name, amount, paymentDate, category };
+            const expense = {
+                name,
+                amount,
+                paymentDate: formatDate(paymentDate),
+                category
+            };
             expenses.push(expense);
 
             updateTable();
@@ -187,7 +249,7 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${expense.name}</td>
-                    <td>${expense.amount.toFixed(2)}</td>
+                    <td>R$ ${expense.amount.toFixed(2)}</td>
                     <td>${expense.paymentDate}</td>
                     <td>${expense.category}</td>
                 `;
@@ -214,16 +276,54 @@
             localStorage.setItem("expenseTrackerData", JSON.stringify(data));
         }
 
-        function loadData() {
-            const savedData = localStorage.getItem("expenseTrackerData");
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                document.getElementById("salary").value = data.salary || "";
-                document.getElementById("salaryDate").value = data.salaryDate || "";
-                expenses = data.expenses || [];
-                updateTable();
-                updateTotal();
-            }
+        function downloadTableAsPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text("Resumo de Gastos", 14, 20);
+
+            const headers = ["Nome", "Valor", "Data de Pagamento", "Categoria"];
+            const data = expenses.map(expense => [
+                expense.name,
+                `R$ ${expense.amount.toFixed(2)}`,
+                expense.paymentDate,
+                expense.category
+            ]);
+
+            doc.autoTable({
+                head: [headers],
+                body: data,
+                startY: 30
+            });
+
+            doc.save("Resumo_de_Gastos.pdf");
+        }
+
+        function downloadAsExcel() {
+            const salary = document.getElementById("salary").value || "Não informado";
+            const salaryDate = document.getElementById("salaryDate").value || "Não informado";
+
+            const mainData = [
+                { Propriedade: "Salário Mensal", Valor: `R$ ${salary}` },
+                { Propriedade: "Data de Recebimento", Valor: salaryDate }
+            ];
+
+            const expensesData = expenses.map(expense => ({
+                Nome: expense.name,
+                Valor: `R$ ${expense.amount.toFixed(2)}`,
+                "Data de Pagamento": expense.paymentDate,
+                Categoria: expense.category
+            }));
+
+            const workbook = XLSX.utils.book_new();
+            const mainSheet = XLSX.utils.json_to_sheet(mainData, { header: ["Propriedade", "Valor"] });
+            const expensesSheet = XLSX.utils.json_to_sheet(expensesData);
+
+            XLSX.utils.book_append_sheet(workbook, mainSheet, "Dados Gerais");
+            XLSX.utils.book_append_sheet(workbook, expensesSheet, "Despesas");
+
+            XLSX.writeFile(workbook, "Resumo_de_Gastos_Completo.xlsx");
         }
 
         window.onload = loadData;
