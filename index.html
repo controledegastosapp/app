@@ -9,25 +9,82 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* O estilo original permanece o mesmo */
-        body { font-family: 'Montserrat', serif; margin: 0; padding: 0; background-color: #000; color: #FFD700; }
-        .container { max-width: 800px; margin: 20px auto; background: #111; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(255, 215, 0, 0.3); }
-        h1, h2 { text-align: center; color: #FFD700; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #FFD700; }
-        input, select, button { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #FFD700; border-radius: 4px; background-color: #222; color: #FFD700; }
-        button { font-weight: bold; cursor: pointer; }
-        button.download { background-color: #FFD700; color: #000; border-radius: 25px; border: none; font-size: 16px; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; color: #FFD700; }
-        table th, table td { border: 1px solid #FFD700; padding: 10px; text-align: center; }
-        table th { background-color: #333; }
-        .summary { margin-top: 20px; text-align: center; }
-        .footer { margin-top: 30px; text-align: center; }
+        body {
+            font-family: 'Montserrat', serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #FFD700;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #111;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(255, 215, 0, 0.3);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #FFD700;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 18px; /* Aumentado em 2 unidades */
+            border: 1px solid #FFD700;
+            border-radius: 4px;
+            background-color: #222;
+            color: #FFD700;
+        }
+        button {
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button.download {
+            background-color: #FFD700;
+            color: #000;
+            border-radius: 25px;
+            border: none;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            color: #FFD700;
+        }
+        table th, table td {
+            border: 1px solid #FFD700;
+            padding: 10px;
+            text-align: center;
+        }
+        table th {
+            background-color: #333;
+        }
+        .summary {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- O layout permanece o mesmo -->
         <h1>Controle de Gastos</h1>
         <h2>Definir Salário</h2>
         <div class="form-group">
